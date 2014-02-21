@@ -1,22 +1,63 @@
 <?php
-echo "Enrolled Students for this course<br><br>";
-$a = $_GET['id'];
+
+/* Set $a to Course id */
+$a = $_GET['id'];		
+
+echo "<br>Enrolled Students for course: ".$a."<br><br>";
+
+/* De-enroll multiple students */
+if(isset($_GET['de_enroll']))
+{
+	$t1=$_GET['de_enroll'];
+	require_once('dbconnect.php');
+	$result = mysql_query("delete from enrolled_details where id_no like '$t1%'") or die(mysql_error());
+}
+
+/* De-enroll single student */
 if(isset($_GET['to_remove']))
 {
-    $b=$_GET['to_remove'];
-require_once('dbconnect.php');
-//echo "delete from enrolled_details where course_id='$a' and id_no='$b'";
-$result = mysql_query("delete from enrolled_details where course_id='$a' and id_no='$b'") or die(mysql_error());
+    	$t2=$_GET['to_remove'];
+	require_once('dbconnect.php');
+	$result = mysql_query("delete from enrolled_details where course_id='$a' and id_no='$t2'") or die(mysql_error());
   
 }
-require_once('dbconnect.php');
-$result = mysql_query("select * from enrolled_details where course_id='$a'") or die(mysql_error());
-while ($row = mysql_fetch_array($result)) {
-    $id_no = $row['id_no'];
 
-    $result1 = mysql_query("select name from registered where id_no='$id_no'") or die(mysql_error());
-    if ($row1 = mysql_fetch_array($result1)) {
-        echo "<div class='enroll'>" . $id_no . "   " . $row1['name'] . "<a href=facindex.php?page=show&id=".$a."&to_remove=" . $id_no . ">   Remove </a></div><br>\n";
-    } 
-}
+?>
+
+<form name="search_form" method="POST" action="#">
+    <input type="text" name="search" value="" />
+    <input type="submit" value="Search"  />
+</form>
+
+<?php
+
+if ( isset($_POST['search']) ) 			 	
+	$s = $_POST['search'];		/* Set $s to search value */
+else						
+	$s = '%';			/*Set $s to '%' if no search took place or search is empty*/
+
+require_once('dbconnect.php');
+
+/*Count the number of entries under 'id_no' from 'enrolled_details' that match $s */
+$temp = mysql_query("select count(id_no) from enrolled_details where id_no like '$s%'") or die(mysql_error());
+$t0 = mysql_fetch_array($temp);	
+if($t0[0] != 0)
+	/* If number of entries matching $s is not 0, provide multiple de-enroll */
+	echo "<br><a align=right href=facindex.php?page=show&id=".$a."&de_enroll=" . $s . ">   De-Enroll all (".$t0[0].")</a><br>\n";
+else
+	echo "<br>No results";
+
+/*Fetch all the entries from 'enrolled_details' whose 'id_no' match $s */
+$result = mysql_query("select * from enrolled_details where id_no like '$s%'") or die(mysql_error());
+
+/*Display details of all entries in $result with an individual de-enroll option*/
+while ($row = mysql_fetch_array($result)) 
+	{
+	    $id_no = $row['id_no'];
+	    $result1 = mysql_query("select name from registered where id_no='$id_no'") or die(mysql_error());
+	    if ($row1 = mysql_fetch_array($result1)) 
+		{
+			echo "<div class='enroll'>" . $id_no . "   " . $row1['name'] . "<a href=facindex.php?page=show&id=".$a."&to_remove=" . $id_no . "> Remove </a></div><br>\n";
+	    	} 
+	}
 ?>
